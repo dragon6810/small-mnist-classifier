@@ -1,9 +1,14 @@
 #include <network/network.h>
 
 #include <assert.h>
+#include <math.h>
 
 float network_run_relu(float x)
 {
+    // doing sigmoid instead for now
+    
+    //return 1.0 / (1.0 + expf(-x));
+
     if(x < 0)
         return 0;
 
