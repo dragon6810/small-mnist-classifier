@@ -1,8 +1,8 @@
-CC := gcc -c
-CC_FLAGS := -Wall -g -std=gnu11 -MMD -MP
+CC := clang -c
+CC_FLAGS := -D_POSIX_C_SOURCE=199309L -Wall -g -std=c11 -MMD -MP -fsanitize=address
 
-LD := gcc
-LD_FLAGS :=
+LD := clang
+LD_FLAGS := -fsanitize=address
 
 BIN_DIR := bin
 OBJ_DIR := obj

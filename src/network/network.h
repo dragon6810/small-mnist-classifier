@@ -1,13 +1,7 @@
 #ifndef _network_h
 #define _network_h
 
-#define NETWORK_MAX_LAYERS 16
-#define NETWORK_MAX_EDGES 8192
-#define NETWORK_MAX_LAYER_NODES 2048
-
-/*
- * Each network is 819264 bytes, I should make these dynamic some time.
-*/
+#include <list/list.h>
 
 /*
  * ================================
@@ -23,7 +17,8 @@ typedef struct network_network_s network_network_t;
 struct network_node_s
 {
     float val;
-    network_edge_t *edges[2]; // 0 is before, 1 is after
+    list_t edges[2]; // list of network_edge_t*; 0 is incoming, 1 is outgoing
+    float bias;      // incoming bias
 };
 
 struct network_edge_s
@@ -34,15 +29,13 @@ struct network_edge_s
 
 struct network_layer_s
 {
-    int nnodes;
-    network_node_t nodes[NETWORK_MAX_LAYER_NODES];
+    list_t nodes; // list of network_node_t
 };
 
 struct network_network_s
 {
-    int nlayers;
-    network_layer_t layers[NETWORK_MAX_LAYERS];
-    network_edge_t edges[NETWORK_MAX_EDGES];
+    list_t layers; // list of network_layer_t
+    list_t edges;  // list of network_edge_t
 };
 
 /*
@@ -56,5 +49,12 @@ struct network_network_s
  *  EXTERNAL ROUTINES DEFENITIONS
  * ================================
 */
+
+void network_nodeinitialize(network_node_t* node);
+
+void network_layerinitialize(network_layer_t* layer, int nnodes);
+
+void network_initialize(network_network_t* network);
+void network_addlayer(network_network_t* network, network_layer_t* layer);
 
 #endif

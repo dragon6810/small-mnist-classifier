@@ -1,0 +1,21 @@
+#include <stdio.h>
+
+#include <network/network.h>
+
+network_network_t network;
+
+void main_intromsg(void)
+{
+    int i;
+
+    printf("================================\n     Small MNIST Classifier\n================================\n");
+}
+
+int main(int argc, char** argv)
+{
+    main_intromsg();
+
+    network_initialize(&network);
+
+    return 0;
+}
