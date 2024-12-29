@@ -46,5 +46,10 @@ int main(int argc, char** argv)
     timer_end();
     printf("network initialized in %fms.\n", timer_elapsedms);
 
+    timer_begin();
+    network_run(&network);
+    timer_end();
+    printf("network ran in %fms.\n", timer_elapsedms);
+
     return 0;
 }
