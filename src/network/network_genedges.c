@@ -1,6 +1,9 @@
 #include <network/network.h>
 
 #include <assert.h>
+#include <math.h>
+
+#include <random/random.h>
 
 void network_genedges(network_network_t* network)
 {
@@ -12,6 +15,7 @@ void network_genedges(network_network_t* network)
     network_layer_t *layersdata;
     network_edge_t edge, *newedge;
     int nedges;
+    float max;
 
     assert(network);
     assert(network->layers.size >= 2);
@@ -40,6 +44,9 @@ void network_genedges(network_network_t* network)
                 network_edgeinitialize(&edge);
                 edge.nodes[0] = node;
                 edge.nodes[1] = nextnode;
+                max = sqrtf(6.0 / (float) layer->nodes.size);
+                edge.weight = random_float(-max, max);
+
                 ((network_edge_t*) network->edges.data)[e] = edge;
                 newedge = ((network_edge_t*) network->edges.data) + e;
 
