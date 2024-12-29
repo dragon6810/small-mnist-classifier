@@ -9,4 +9,5 @@ void network_initialize(network_network_t* network)
 
     memset(network, 0, sizeof(network_network_t));
     list_initialize(&network->layers, sizeof(network_layer_t)); 
+    list_initialize(&network->edges, sizeof(network_edge_t));
 }

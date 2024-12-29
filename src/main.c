@@ -2,6 +2,7 @@
 
 #include <network/network.h>
 #include <timer/timer.h>
+#include <random/random.h>
 
 #define MAIN_MNISTINPUTLEN 784
 #define MAIN_MNISTOUTPUTLEN 10
@@ -34,11 +35,14 @@ static void main_makelayers(void)
 
 int main(int argc, char** argv)
 {
+    random_seed();
+
     main_intromsg();
 
     timer_begin();
     network_initialize(&network);
     main_makelayers();
+    network_genedges(&network);
     timer_end();
     printf("network initialized in %fms.\n", timer_elapsedms);
 

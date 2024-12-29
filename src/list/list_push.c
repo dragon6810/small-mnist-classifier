@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-void list_push(list_t* list, void* element)
+void* list_push(list_t* list, void* element)
 {
     assert(list->elsize);
 
@@ -14,7 +14,7 @@ void list_push(list_t* list, void* element)
         list->buffsize = list->elsize;
         list->data = malloc(list->elsize);
         memcpy(list->data, element, list->elsize);
-        return;
+        return list->data;
     }
 
     list->size++;
@@ -25,4 +25,5 @@ void list_push(list_t* list, void* element)
     }
 
     memcpy(list->data + (list->size - 1) * list->elsize, element, list->elsize);
+    return list->data + (list->size - 1) * list->elsize;
 }

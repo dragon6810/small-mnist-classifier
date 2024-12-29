@@ -52,9 +52,12 @@ struct network_network_s
 
 void network_nodeinitialize(network_node_t* node);
 
+void network_edgeinitialize(network_edge_t* edge);
+
 void network_layerinitialize(network_layer_t* layer, int nnodes);
 
 void network_initialize(network_network_t* network);
 void network_addlayer(network_network_t* network, network_layer_t* layer);
+void network_genedges(network_network_t* network);
 
 #endif

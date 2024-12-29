@@ -31,7 +31,7 @@ struct list_s
 
 void list_initialize(list_t* list, unsigned long int elsize);
 void list_resize(list_t* list, unsigned long int size);
-void list_push(list_t* list, void* element);
+void* list_push(list_t* list, void* element);
 void list_pop(list_t* list, void* element);
 
 #endif
