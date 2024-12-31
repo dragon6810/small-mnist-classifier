@@ -2,6 +2,7 @@
     "files.associations": {
         "sigmas.h": "c",
         "vector.h": "c",
-        "list.h": "c"
+        "list.h": "c",
+        "network.h": "c"
     }
 }

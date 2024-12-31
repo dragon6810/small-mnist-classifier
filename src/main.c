@@ -9,6 +9,7 @@
 #define MAIN_MNISTINPUTLEN  784
 #define MAIN_MNISTOUTPUTLEN 10
 #define MAIN_MNISTNDIGITS   60000
+#define MAIN_NEPOCHS        4
 #define MAIN_NBATCHES       500
 #define MAIN_BATCHSIZE      (MAIN_MNISTNDIGITS / MAIN_NBATCHES)
 
@@ -177,7 +178,7 @@ static void main_intromsg(void)
 
 int main(int argc, char** argv)
 {
-    int i, j, k;
+    int e, i, j, k;
 
     int wanted;
     vector_t vwanted;
@@ -201,37 +202,41 @@ int main(int argc, char** argv)
     list_resize(&digits, MAIN_MNISTNDIGITS);
     main_loadmnist();
     main_loadmnistlabels();
-    //list_shuffle(&digits, &digits);
     timer_end();
     printf("mnist training set loaded in %fms.\n", timer_elapsedms);
 
     timer_begin();
     digitsdata = (main_mnistdigit_t*) digits.data;
     input = (network_layer_t*) network.layers.data;
-    for(i=0; i<MAIN_NBATCHES; i++)
+    for(e=0; e<MAIN_NEPOCHS; e++)
     {
-        printf("batch  %d:\n", i);
-
-        for(j=i*MAIN_BATCHSIZE; j<(i+1)*MAIN_BATCHSIZE; j++)
+        for(i=0; i<MAIN_NBATCHES; i++)
         {
-            vector_alloc(&vwanted, MAIN_MNISTOUTPUTLEN);
-            vwanted.data[digitsdata[j].label] = 1.0;
+            printf("batch  %d:\n", i);
 
-            for(k=0; k<MAIN_MNISTINPUTLEN; k++)
-                ((network_node_t*)input->nodes.data)[k].val = digitsdata[j].values[k];
+            for(j=i*MAIN_BATCHSIZE; j<(i+1)*MAIN_BATCHSIZE; j++)
+            {
+                vector_alloc(&vwanted, MAIN_MNISTOUTPUTLEN);
+                vwanted.data[digitsdata[j].label] = 1.0;
 
-            network_run(&network);
-            network_backprop(&network, vwanted, MAIN_BATCHSIZE);
+                for(k=0; k<MAIN_MNISTINPUTLEN; k++)
+                    ((network_node_t*)input->nodes.data)[k].val = digitsdata[j].values[k];
 
-            vector_free(&vwanted);
+                network_run(&network);
+                network_backprop(&network, vwanted, MAIN_BATCHSIZE);
 
-            output = &((network_layer_t*)network.layers.data)[network.layers.size-1];
-            printf("    expected %hhu.\n", digitsdata[j].label);
-            for(k=0; k<MAIN_MNISTOUTPUTLEN; k++)
-                printf("    %d: %f.\n", k, ((network_node_t*)output->nodes.data)[k].val);
+                vector_free(&vwanted);
+
+                output = &((network_layer_t*)network.layers.data)[network.layers.size-1];
+                printf("    expected %hhu:\n", digitsdata[j].label);
+                for(k=0; k<MAIN_MNISTOUTPUTLEN; k++)
+                    printf("        %d: %f.\n", k, ((network_node_t*)output->nodes.data)[k].val);
+            }
+
+            network_learn(&network);
         }
 
-        network_learn(&network);
+        list_shuffle(&digits, &digits);
     }
 
     timer_end();
