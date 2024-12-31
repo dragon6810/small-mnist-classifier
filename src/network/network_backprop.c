@@ -11,23 +11,17 @@ void network_backprop_node(network_layer_t* layer, network_node_t* node)
 
     network_edge_t **edgesdata;
     float slope, bslope;
-    float plainactivation;
 
     assert(layer);
     assert(node);
 
     // Do bias
-    bslope = divforavg;
-    bslope *= layer->sigmaslope(layer, plainactivation + node->bias);
-    bslope *= node->inboundbslope;
+    bslope = node->inboundbslope;
 
     // Do weights
     edgesdata = (network_edge_t**) node->edges[0].data;
-    plainactivation = 0;
     for(i=0; i<node->edges->size; i++)
     {
-        plainactivation += edgesdata[i]->weight * edgesdata[i]->nodes[0]->val;
-
         slope = divforavg;
         slope *= edgesdata[i]->nodes[0]->val;
         slope *= layer->sigmaslope(layer, edgesdata[i]->weight * edgesdata[i]->nodes[0]->val + node->bias);
@@ -75,7 +69,10 @@ void network_backprop(network_network_t* network, vector_t want, unsigned long i
 
     nodesdata = (network_node_t*) curlayer->nodes.data;
     for(i=0; i<want.len; i++)
-        nodesdata[i].inboundwslope = nodesdata[i].inboundbslope = 2.0 * (nodesdata[i].val - want.data[i]);
+    {
+        nodesdata[i].inboundwslope += divforavg * 2.0 * (nodesdata[i].val - want.data[i]);
+        nodesdata[i].inboundbslope += divforavg * 2.0 * (nodesdata[i].val - want.data[i]);
+    }
 
     for(i=network->layers.size-1; i>0; i--)
         network_backprop_layer(curlayer);
