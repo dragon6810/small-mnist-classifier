@@ -14,6 +14,8 @@ void network_learn(network_network_t* network, unsigned long int want)
     assert(network);
     assert(network->layers.size >= 2);
 
+    return;
+
     cost = 0.0;
     output = ((network_layer_t*) network->layers.data) + network->layers.size - 1;
     for(i=0; i<output->nodes.size; i++)
@@ -22,6 +24,4 @@ void network_learn(network_network_t* network, unsigned long int want)
         target = i == want ? 1.0 : 0.0;
         cost += (target - val) * (target - val);
     }
-
-    printf("cost: %f.\n", cost);
 }

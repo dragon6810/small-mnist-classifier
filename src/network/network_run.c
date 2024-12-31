@@ -3,16 +3,27 @@
 #include <assert.h>
 #include <math.h>
 
-float network_run_relu(float x)
+#include <vector/vector.h>
+
+void network_run_sigmalayer(network_layer_t* layer)
 {
-    // doing sigmoid instead for now
+    int i;
+
+    vector_t vec;
+    network_node_t *nodesdata;
+
+    assert(layer);
+
+    vector_alloc(&vec, layer->nodes.size);
+    nodesdata = (network_node_t*) layer->nodes.data;
+
+    for(i=0; i<vec.len; i++)
+        vec.data[i] = layer->sigma(layer, nodesdata[i].val);
+
+    for(i=0; i<vec.len; i++)
+        nodesdata[i].val = vec.data[i];
     
-    //return 1.0 / (1.0 + expf(-x));
-
-    if(x < 0)
-        return 0;
-
-    return x;
+    vector_free(&vec);
 }
 
 void network_run_runnode(network_node_t* node)
@@ -30,8 +41,6 @@ void network_run_runnode(network_node_t* node)
         assert(edgesdata[i]->nodes[0]);
         node->val += edgesdata[i]->nodes[0]->val * edgesdata[i]->weight;
     }
-
-    node->val = network_run_relu(node->val);
 }
 
 void network_run_runlayer(network_layer_t* layer)
@@ -45,6 +54,8 @@ void network_run_runlayer(network_layer_t* layer)
     nodesdata = (network_node_t*) layer->nodes.data;
     for(i=0; i<layer->nodes.size; i++)
         network_run_runnode(&nodesdata[i]);
+
+    network_run_sigmalayer(layer);
 }
 
 void network_run(network_network_t* network)

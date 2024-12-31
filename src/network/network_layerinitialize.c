@@ -3,7 +3,7 @@
 #include <assert.h>
 #include <string.h>
 
-void network_layerinitialize(network_layer_t* layer, int nnodes)
+void network_layerinitialize(network_layer_t* layer, int nnodes, float (*sigma)(network_layer_t*, float), float (*sigmaslope)(network_layer_t*, float))
 {
     int i;
 
@@ -18,4 +18,7 @@ void network_layerinitialize(network_layer_t* layer, int nnodes)
 
     for(i=0; i<nnodes; i++)
         network_nodeinitialize(&nodesdata[i]);
+
+    layer->sigma = sigma;
+    layer->sigmaslope = sigmaslope;
 }

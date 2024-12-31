@@ -4,6 +4,7 @@
 #include <network/network.h>
 #include <timer/timer.h>
 #include <random/random.h>
+#include <network/sigmas/sigmas.h>
 
 #define MAIN_MNISTINPUTLEN  784
 #define MAIN_MNISTOUTPUTLEN 10
@@ -107,13 +108,16 @@ static void main_makelayers(void)
     /*
      * 784 - 16 - 16 - 10
     */
-    network_layerinitialize(&layer, MAIN_MNISTINPUTLEN);
+    network_layerinitialize(&layer, MAIN_MNISTINPUTLEN, NULL, NULL);
     network_addlayer(&network, &layer);
-    network_layerinitialize(&layer, 16);
+
+    network_layerinitialize(&layer, 16, sigmas_relu, sigmas_reluslope);
     network_addlayer(&network, &layer);
-    network_layerinitialize(&layer, 16);
+
+    network_layerinitialize(&layer, 16, sigmas_relu, sigmas_reluslope);
     network_addlayer(&network, &layer);
-    network_layerinitialize(&layer, MAIN_MNISTOUTPUTLEN);
+
+    network_layerinitialize(&layer, MAIN_MNISTOUTPUTLEN, sigmas_softmax, sigmas_softmaxslope);
     network_addlayer(&network, &layer);
 }
 
@@ -129,6 +133,7 @@ int main(int argc, char** argv)
     int i, j;
 
     int wanted;
+    vector_t vwanted;
     network_layer_t *output;
 
     random_seed();
@@ -149,16 +154,23 @@ int main(int argc, char** argv)
         
         main_loadmnist(i);
         wanted = main_mnistexpect(i);
+
+        vector_alloc(&vwanted, MAIN_MNISTOUTPUTLEN);
+        vwanted.data[wanted] = 1.0;
+
         network_run(&network);
+        network_backprop(&network, vwanted);
         network_learn(&network, wanted);
+
+        vector_free(&vwanted);
 
         output = &((network_layer_t*)network.layers.data)[network.layers.size-1];
         printf("    expected %hhu.\n", wanted);
         for(j=0; j<MAIN_MNISTOUTPUTLEN; j++)
             printf("    %d: %f.\n", j, ((network_node_t*)output->nodes.data)[j].val);
-    
-        timer_end();
     }
+
+    timer_end();
     printf("network ran in %fms:\n", timer_elapsedms);
     
     return 0;
