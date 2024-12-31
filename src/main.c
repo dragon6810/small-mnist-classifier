@@ -9,6 +9,8 @@
 #define MAIN_MNISTINPUTLEN  784
 #define MAIN_MNISTOUTPUTLEN 10
 #define MAIN_MNISTNDIGITS   60000
+#define MAIN_NBATCHES       500
+#define MAIN_BATCHSIZE      (MAIN_MNISTNDIGITS / MAIN_NBATCHES)
 
 #if defined(__BYTE_ORDER) && defined(__BIG_ENDIAN) && (__BYTE_ORDER == __BIG_ENDIAN)
     #define HOST_IS_BIG_ENDIAN 1
@@ -24,6 +26,13 @@
 #define BIG_TO_HOST32(x) (HOST_IS_BIG_ENDIAN ? (x) : SWAP32(x))
 
 network_network_t network;
+list_t digits;
+
+typedef struct main_mnistdigit_s
+{
+    float values[MAIN_MNISTINPUTLEN];
+    int label;
+} main_mnistdigit_t;
 
 static unsigned char main_mnistexpect(int index)
 {
@@ -59,15 +68,17 @@ static unsigned char main_mnistexpect(int index)
     return curval;
 }
 
-static void main_loadmnist(int index)
+static void main_loadmnist()
 {
-    int i;
+    int d, i;
 
     FILE* ptr;
     unsigned char datatype, ndimensions;
     unsigned int dimsizes[3];
     unsigned char curval;
-    network_layer_t *input;
+    main_mnistdigit_t *digitsdata;
+
+    assert(digits.size == MAIN_MNISTNDIGITS);
 
     ptr = fopen("mnist/train-images-idx3-ubyte", "rb");
     assert(ptr);
@@ -88,14 +99,16 @@ static void main_loadmnist(int index)
     assert(dimsizes[0] == MAIN_MNISTNDIGITS);
     assert(dimsizes[1] == 28);
     assert(dimsizes[2] == 28);
-    assert(index < dimsizes[0]);
 
-    input = (network_layer_t*) network.layers.data;
-    fseek(ptr, index*28*28, SEEK_CUR);
-    for(i=0; i<28*28; i++)
+    digitsdata = (main_mnistdigit_t*) digits.data;
+    for(d=0; d<dimsizes[0]; d++)
     {
-        fread(&curval, 1, 1, ptr);
-        ((network_node_t*)input->nodes.data)[i].val = (float) curval / 255.0;
+        for(i=0; i<28*28; i++)
+        {
+            fread(&curval, 1, 1, ptr);
+            digitsdata[d].values[i] = (float) curval / 255.0;
+            digitsdata[d].values[i] = main_mnistexpect(d);
+        }
     }
 
     fclose(ptr);
@@ -130,10 +143,12 @@ static void main_intromsg(void)
 
 int main(int argc, char** argv)
 {
-    int i, j;
+    int i, j, k;
 
     int wanted;
     vector_t vwanted;
+    main_mnistdigit_t *digitsdata;
+    network_layer_t *input;
     network_layer_t *output;
 
     random_seed();
@@ -148,26 +163,39 @@ int main(int argc, char** argv)
     printf("network initialized in %fms.\n", timer_elapsedms);
 
     timer_begin();
-    for(i=0; i<MAIN_MNISTNDIGITS; i++)
+    list_initialize(&digits, sizeof(main_mnistdigit_t));
+    list_resize(&digits, MAIN_MNISTNDIGITS);
+    main_loadmnist();
+    list_shuffle(&digits, &digits);
+    timer_end();
+    printf("mnist training set loaded in %fms.\n", timer_elapsedms);
+
+    timer_begin();
+    digitsdata = (main_mnistdigit_t*) digits.data;
+    for(i=0; i<MAIN_NBATCHES; i++)
     {
-        printf("training iteration %d:\n", i);
-        
-        main_loadmnist(i);
-        wanted = main_mnistexpect(i);
+        printf("batch  %d:\n", i);
 
-        vector_alloc(&vwanted, MAIN_MNISTOUTPUTLEN);
-        vwanted.data[wanted] = 1.0;
+        for(j=i*MAIN_BATCHSIZE; j<(i+1)*MAIN_BATCHSIZE; j++)
+        {
+            vector_alloc(&vwanted, MAIN_MNISTOUTPUTLEN);
+            vwanted.data[digitsdata[j].label] = 1.0;
 
-        network_run(&network);
-        network_backprop(&network, vwanted, 1);
+            for(k=0; k<MAIN_MNISTINPUTLEN; k++)
+                ((network_node_t*)input->nodes.data)[k].val = digitsdata[j].values[k];
+
+            network_run(&network);
+            network_backprop(&network, vwanted, MAIN_BATCHSIZE);
+
+            vector_free(&vwanted);
+
+            output = &((network_layer_t*)network.layers.data)[network.layers.size-1];
+            printf("    expected %hhu.\n", wanted);
+            for(j=0; j<MAIN_MNISTOUTPUTLEN; j++)
+                printf("    %d: %f.\n", j, ((network_node_t*)output->nodes.data)[j].val);
+        }
+
         network_learn(&network);
-
-        vector_free(&vwanted);
-
-        output = &((network_layer_t*)network.layers.data)[network.layers.size-1];
-        printf("    expected %hhu.\n", wanted);
-        for(j=0; j<MAIN_MNISTOUTPUTLEN; j++)
-            printf("    %d: %f.\n", j, ((network_node_t*)output->nodes.data)[j].val);
     }
 
     timer_end();

@@ -18,7 +18,7 @@ void network_learn(network_network_t* network)
 
     for(i=0; i<network->edges.size; i++)
     {
-        edgesdata[i].weight += edgesdata[i].wantnudge;
+        edgesdata[i].weight += edgesdata[i].wantnudge * learnrate;
         edgesdata[i].wantnudge = 0.0;
     }
 
@@ -27,7 +27,7 @@ void network_learn(network_network_t* network)
         nodesdata = (network_node_t*) layersdata[i].nodes.data;
         for(j=0; j<layersdata[i].nodes.size; j++)
         {
-            nodesdata[j].bias += nodesdata[j].wantnudge;
+            nodesdata[j].bias += nodesdata[j].wantnudge * learnrate;
             nodesdata[j].wantnudge = nodesdata[j].inboundwslope = nodesdata[j].inboundbslope = 0.0;
         }
     }

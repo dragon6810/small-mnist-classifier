@@ -33,7 +33,7 @@ void network_backprop_node(network_layer_t* layer, network_node_t* node)
         edgesdata[i]->wantnudge += -slope;
     }
 
-    node->wantnudge = -slope;
+    node->wantnudge += -slope;
 }
 
 void network_backprop_layer(network_layer_t* layer)
