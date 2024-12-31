@@ -224,6 +224,7 @@ int main(int argc, char** argv)
 
                 network_run(&network);
                 network_backprop(&network, vwanted, MAIN_BATCHSIZE);
+                network_cleanupbackprop(&network);
 
                 vector_free(&vwanted);
 

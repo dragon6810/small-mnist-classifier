@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <assert.h>
 
-const float learnrate = 0.005;
+const float learnrate = 0.1;
 
 void network_learn(network_network_t* network)
 {

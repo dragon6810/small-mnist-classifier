@@ -22,7 +22,7 @@ void network_backprop_node(network_layer_t* layer, network_node_t* node)
     edgesdata = (network_edge_t**) node->edges[0].data;
     for(i=0; i<node->edges->size; i++)
     {
-        slope = divforavg;
+        slope = 1;
         slope *= edgesdata[i]->nodes[0]->val;
         slope *= layer->sigmaslope(layer, edgesdata[i]->weight * edgesdata[i]->nodes[0]->val + node->bias);
         slope *= node->inboundwslope;
@@ -30,10 +30,10 @@ void network_backprop_node(network_layer_t* layer, network_node_t* node)
         edgesdata[i]->nodes[0]->inboundwslope += slope;
         edgesdata[i]->nodes[0]->inboundbslope += bslope;
 
-        edgesdata[i]->wantnudge += -slope;
+        edgesdata[i]->wantnudge += -slope * divforavg;
     }
 
-    node->wantnudge += -slope;
+    node->wantnudge += -slope * divforavg;
 }
 
 void network_backprop_layer(network_layer_t* layer)
