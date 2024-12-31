@@ -68,6 +68,41 @@ static unsigned char main_mnistexpect(int index)
     return curval;
 }
 
+static void main_loadmnistlabels()
+{
+    int i;
+
+    FILE* ptr;
+    unsigned char datatype, ndimensions;
+    unsigned int dimsize;
+    unsigned char curval;
+    main_mnistdigit_t *digitsdata;
+
+    ptr = fopen("mnist/train-labels-idx1-ubyte", "rb");
+    assert(ptr);
+
+    fseek(ptr, 2, SEEK_SET);
+    fread(&datatype, 1, 1, ptr);
+    fread(&ndimensions, 1, 1, ptr);
+
+    assert(datatype == 0x08);
+    assert(ndimensions == 1);
+
+    fread(&dimsize, sizeof(int), 1, ptr);
+    dimsize = BIG_TO_HOST32(dimsize);
+
+    assert(dimsize == MAIN_MNISTNDIGITS);
+    
+    digitsdata = (main_mnistdigit_t*) digits.data;
+    for(i=0; i<dimsize; i++)
+    {
+        fread(&curval, 1, 1, ptr);
+        digitsdata[i].label = curval;
+    }
+
+    fclose(ptr);
+}
+
 static void main_loadmnist()
 {
     int d, i;
@@ -107,7 +142,6 @@ static void main_loadmnist()
         {
             fread(&curval, 1, 1, ptr);
             digitsdata[d].values[i] = (float) curval / 255.0;
-            digitsdata[d].values[i] = main_mnistexpect(d);
         }
     }
 
@@ -166,12 +200,14 @@ int main(int argc, char** argv)
     list_initialize(&digits, sizeof(main_mnistdigit_t));
     list_resize(&digits, MAIN_MNISTNDIGITS);
     main_loadmnist();
-    list_shuffle(&digits, &digits);
+    main_loadmnistlabels();
+    //list_shuffle(&digits, &digits);
     timer_end();
     printf("mnist training set loaded in %fms.\n", timer_elapsedms);
 
     timer_begin();
     digitsdata = (main_mnistdigit_t*) digits.data;
+    input = (network_layer_t*) network.layers.data;
     for(i=0; i<MAIN_NBATCHES; i++)
     {
         printf("batch  %d:\n", i);
@@ -190,9 +226,9 @@ int main(int argc, char** argv)
             vector_free(&vwanted);
 
             output = &((network_layer_t*)network.layers.data)[network.layers.size-1];
-            printf("    expected %hhu.\n", wanted);
-            for(j=0; j<MAIN_MNISTOUTPUTLEN; j++)
-                printf("    %d: %f.\n", j, ((network_node_t*)output->nodes.data)[j].val);
+            printf("    expected %hhu.\n", digitsdata[j].label);
+            for(k=0; k<MAIN_MNISTOUTPUTLEN; k++)
+                printf("    %d: %f.\n", k, ((network_node_t*)output->nodes.data)[k].val);
         }
 
         network_learn(&network);
