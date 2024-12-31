@@ -159,8 +159,8 @@ int main(int argc, char** argv)
         vwanted.data[wanted] = 1.0;
 
         network_run(&network);
-        network_backprop(&network, vwanted);
-        network_learn(&network, wanted);
+        network_backprop(&network, vwanted, 1);
+        network_learn(&network);
 
         vector_free(&vwanted);
 

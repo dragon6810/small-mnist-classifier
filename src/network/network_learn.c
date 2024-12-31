@@ -3,25 +3,32 @@
 #include <stdio.h>
 #include <assert.h>
 
-void network_learn(network_network_t* network, unsigned long int want)
+const float learnrate = 0.1;
+
+void network_learn(network_network_t* network)
 {
-    int i;
+    int i, j;
 
-    network_layer_t *output;
-    float cost;
-    float target, val;
+    network_layer_t *layersdata;
+    network_node_t *nodesdata;
+    network_edge_t *edgesdata;
 
-    assert(network);
-    assert(network->layers.size >= 2);
+    layersdata = (network_layer_t*) network->layers.data;
+    edgesdata = (network_edge_t*) network->edges.data;
 
-    return;
-
-    cost = 0.0;
-    output = ((network_layer_t*) network->layers.data) + network->layers.size - 1;
-    for(i=0; i<output->nodes.size; i++)
+    for(i=0; i<network->edges.size; i++)
     {
-        val = ((network_node_t*)output->nodes.data)[i].val;
-        target = i == want ? 1.0 : 0.0;
-        cost += (target - val) * (target - val);
+        edgesdata[i].weight += edgesdata[i].wantnudge;
+        edgesdata[i].wantnudge = 0.0;
+    }
+
+    for(i=0; i<network->layers.size; i++)
+    {
+        nodesdata = (network_node_t*) layersdata[i].nodes.data;
+        for(j=0; j<layersdata[i].nodes.size; j++)
+        {
+            nodesdata[j].bias += nodesdata[j].wantnudge;
+            nodesdata[j].wantnudge = nodesdata[j].inboundwslope = nodesdata[j].inboundbslope = 0.0;
+        }
     }
 }
