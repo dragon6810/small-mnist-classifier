@@ -75,7 +75,7 @@ void network_backprop(network_network_t* network, vector_t want, unsigned long i
 
     nodesdata = (network_node_t*) curlayer->nodes.data;
     for(i=0; i<want.len; i++)
-        nodesdata[i].inboundwslope = nodesdata[i].inboundbslope = powf(nodesdata[i].val - want.data[i], 2.0);
+        nodesdata[i].inboundwslope = nodesdata[i].inboundbslope = 2.0 * (nodesdata[i].val - want.data[i]);
 
     for(i=network->layers.size-1; i>0; i--)
         network_backprop_layer(curlayer);
