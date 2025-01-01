@@ -3,6 +3,7 @@
         "sigmas.h": "c",
         "vector.h": "c",
         "list.h": "c",
-        "network.h": "c"
+        "network.h": "c",
+        "assert.h": "c"
     }
 }

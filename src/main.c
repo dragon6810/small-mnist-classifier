@@ -9,7 +9,7 @@
 #define MAIN_MNISTINPUTLEN  784
 #define MAIN_MNISTOUTPUTLEN 10
 #define MAIN_MNISTNDIGITS   60000
-#define MAIN_NEPOCHS        4
+#define MAIN_NEPOCHS        8
 #define MAIN_NBATCHES       500
 #define MAIN_BATCHSIZE      (MAIN_MNISTNDIGITS / MAIN_NBATCHES)
 
@@ -159,13 +159,13 @@ static void main_makelayers(void)
     network_layerinitialize(&layer, MAIN_MNISTINPUTLEN, NULL, NULL);
     network_addlayer(&network, &layer);
 
-    network_layerinitialize(&layer, 16, sigmas_relu, sigmas_reluslope);
+    network_layerinitialize(&layer, 16, sigmas_sigmoid, sigmas_sigmoidslope);
     network_addlayer(&network, &layer);
 
-    network_layerinitialize(&layer, 16, sigmas_relu, sigmas_reluslope);
+    network_layerinitialize(&layer, 16, sigmas_sigmoid, sigmas_sigmoidslope);
     network_addlayer(&network, &layer);
 
-    network_layerinitialize(&layer, MAIN_MNISTOUTPUTLEN, sigmas_softmax, sigmas_softmaxslope);
+    network_layerinitialize(&layer, MAIN_MNISTOUTPUTLEN, sigmas_sigmoid, sigmas_sigmoidslope);
     network_addlayer(&network, &layer);
 }
 
@@ -224,7 +224,6 @@ int main(int argc, char** argv)
 
                 network_run(&network);
                 network_backprop(&network, vwanted, MAIN_BATCHSIZE);
-                network_cleanupbackprop(&network);
 
                 vector_free(&vwanted);
 

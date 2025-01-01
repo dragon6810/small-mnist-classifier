@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <assert.h>
 
-const float learnrate = 0.1;
+const float learnrate = 0.01;
 
 void network_learn(network_network_t* network)
 {
@@ -28,7 +28,7 @@ void network_learn(network_network_t* network)
         for(j=0; j<layersdata[i].nodes.size; j++)
         {
             nodesdata[j].bias += nodesdata[j].wantnudge * learnrate;
-            nodesdata[j].wantnudge = nodesdata[j].inboundwslope = nodesdata[j].inboundbslope = 0.0;
+            nodesdata[j].wantnudge = 0.0;
         }
     }
 }

@@ -5,35 +5,55 @@
 
 float divforavg;
 
+void network_backprop_cleanup(network_network_t* network)
+{
+    int i, j;
+
+    network_layer_t *layersdata;
+    network_node_t *nodesdata;
+
+    layersdata = (network_layer_t*) network->layers.data;
+
+    for(i=0; i<network->layers.size; i++)
+    {
+        nodesdata = (network_node_t*) layersdata[i].nodes.data;
+        for(j=0; j<layersdata[i].nodes.size; j++)
+            nodesdata[j].inboundwslope = nodesdata[j].inboundbslope = 0.0;
+    }
+}
+
 void network_backprop_node(network_layer_t* layer, network_node_t* node)
 {
     int i;
 
     network_edge_t **edgesdata;
-    float slope, bslope;
+    float wslope, bslope;
 
     assert(layer);
     assert(node);
 
     // Do bias
-    bslope = node->inboundbslope;
+    bslope = node->val * node->inboundbslope;
 
     // Do weights
     edgesdata = (network_edge_t**) node->edges[0].data;
     for(i=0; i<node->edges->size; i++)
     {
-        slope = 1;
-        slope *= edgesdata[i]->nodes[0]->val;
-        slope *= layer->sigmaslope(layer, edgesdata[i]->weight * edgesdata[i]->nodes[0]->val + node->bias);
-        slope *= node->inboundwslope;
+        wslope = 1;
+        // a with respect to z
+        wslope *= layer->sigmaslope(layer, edgesdata[i]->weight * edgesdata[i]->nodes[0]->val + node->bias);
+        // all upstream derivatives
+        wslope *= node->inboundwslope;
 
-        edgesdata[i]->nodes[0]->inboundwslope += slope;
-        edgesdata[i]->nodes[0]->inboundbslope += bslope;
+        edgesdata[i]->nodes[0]->inboundwslope += wslope * edgesdata[i]->weight;
+        edgesdata[i]->nodes[0]->inboundbslope += bslope * edgesdata[i]->weight;
 
-        edgesdata[i]->wantnudge += -slope * divforavg;
+        // z with respect to w
+        wslope *= edgesdata[i]->nodes[0]->val;
+        edgesdata[i]->wantnudge += -wslope * divforavg;
     }
 
-    node->wantnudge += -slope * divforavg;
+    node->wantnudge += -bslope * divforavg;
 }
 
 void network_backprop_layer(network_layer_t* layer)
@@ -70,10 +90,13 @@ void network_backprop(network_network_t* network, vector_t want, unsigned long i
     nodesdata = (network_node_t*) curlayer->nodes.data;
     for(i=0; i<want.len; i++)
     {
-        nodesdata[i].inboundwslope += divforavg * 2.0 * (nodesdata[i].val - want.data[i]);
-        nodesdata[i].inboundbslope += divforavg * 2.0 * (nodesdata[i].val - want.data[i]);
+        // cost with respect to a
+        nodesdata[i].inboundwslope = 2.0 * (nodesdata[i].val - want.data[i]);
+        nodesdata[i].inboundbslope = 2.0 * (nodesdata[i].val - want.data[i]);
     }
 
     for(i=network->layers.size-1; i>0; i--)
         network_backprop_layer(curlayer);
+
+    network_backprop_cleanup(network);
 }
