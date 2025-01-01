@@ -19,12 +19,10 @@ struct network_node_s
 {
     float val;
     list_t edges[2]; // list of network_edge_t*; 0 is incoming, 1 is outgoing
-    float bias;      // incoming bias
+    float bias;      // bias
 
     // backprop stuff
-    float inboundwslope;
-    float inboundbslope;
-
+    float inboundslope;
     float wantnudge;
 };
 
