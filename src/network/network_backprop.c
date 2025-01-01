@@ -24,7 +24,7 @@ void network_backprop_cleanup(network_network_t* network)
 
 void network_backprop_node(network_layer_t* layer, network_node_t* node)
 {
-    int i;
+    int i, j;
 
     network_edge_t **edgesdata;
     float wslope, bslope;
@@ -39,14 +39,13 @@ void network_backprop_node(network_layer_t* layer, network_node_t* node)
     edgesdata = (network_edge_t**) node->edges[0].data;
     for(i=0; i<node->edges->size; i++)
     {
-        wslope = 1;
         // a with respect to z
-        wslope *= layer->sigmaslope(layer, edgesdata[i]->weight * edgesdata[i]->nodes[0]->val + node->bias);
+        wslope = layer->sigmaslope(layer, edgesdata[i]->weight * edgesdata[i]->nodes[0]->val + node->bias);
         // all upstream derivatives
         wslope *= node->inboundwslope;
 
-        edgesdata[i]->nodes[0]->inboundwslope += wslope * edgesdata[i]->weight;
-        edgesdata[i]->nodes[0]->inboundbslope += bslope * edgesdata[i]->weight;
+        edgesdata[i]->nodes[0]->inboundwslope += (wslope + node->val) * edgesdata[i]->weight;
+        edgesdata[i]->nodes[0]->inboundbslope += (bslope + node->val) * edgesdata[i]->weight;
 
         // z with respect to w
         wslope *= edgesdata[i]->nodes[0]->val;
