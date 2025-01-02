@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <assert.h>
+#include <stdbool.h>
+#include <string.h>
 
 #include <network/network.h>
 #include <timer/timer.h>
@@ -34,6 +36,54 @@ typedef struct main_mnistdigit_s
     float values[MAIN_MNISTINPUTLEN];
     int label;
 } main_mnistdigit_t;
+
+static void main_runtests(void)
+{
+    int i;
+
+    timer_begin();
+
+    network_initialize(&network);
+
+    network_layer_t layer;
+    network_layer_t *layersdata;
+    network_edge_t *edgesdata;
+    network_node_t *inputdata, *outputdata;
+
+    /*
+     * 2 - 2
+    */
+    network_layerinitialize(&layer, 2, NULL, NULL);
+    network_addlayer(&network, &layer);
+
+    network_layerinitialize(&layer, 2, sigmas_none, sigmas_noneslope);
+    network_addlayer(&network, &layer);
+
+    network_genedges(&network);
+
+    // Initialize all weights to 1
+    edgesdata = (network_edge_t*) network.edges.data;
+    for(i=0; i<network.edges.size; i++)
+        edgesdata[i].weight = 1;
+
+    // Initialize all biases to 0
+    layersdata = (network_layer_t*) network.layers.data;
+    outputdata = (network_node_t*) layersdata[1].nodes.data;
+    for(i=0; i<layersdata[1].nodes.size; i++)
+        outputdata[i].bias = 0;
+
+    inputdata = (network_node_t*) layersdata[0].nodes.data;
+    inputdata[0].val = 1;
+    inputdata[1].val = 0;
+    network_run(&network);
+    assert(outputdata[0].val == 1.0);
+    assert(outputdata[1].val == 1.0);
+
+    network_free(&network);
+
+    timer_end();
+    printf("all tests passed in %fms.\n", timer_elapsedms);
+}
 
 static unsigned char main_mnistexpect(int index)
 {
@@ -176,6 +226,16 @@ static void main_intromsg(void)
     printf("================================\n");
 }
 
+static void main_usagemsg(void)
+{
+    printf("Usage:");
+    printf(" small-mnist-classifier");
+    printf(" [-ht]");
+    printf("\n");
+    printf("-h: prints usage and returns.\n");
+    printf("-t: runs test instead of core program.\n");
+}
+
 int main(int argc, char** argv)
 {
     int e, i, j, k;
@@ -185,10 +245,34 @@ int main(int argc, char** argv)
     main_mnistdigit_t *digitsdata;
     network_layer_t *input;
     network_layer_t *output;
+    bool test;
 
     random_seed();
 
     main_intromsg();
+
+    for(i=1; i<argc; i++)
+    {
+        if(argv[i][0] == '-')
+        {
+            for(j=1; j<strlen(argv[i]); j++)
+            {
+                switch(argv[i][j])
+                {
+                case 'h':
+                    main_usagemsg();
+                    return 0;
+                case 't':
+                    main_runtests();
+                    return 0;
+                default:
+                    fprintf(stderr, "unknown option '%c'.\n", argv[i][j]);
+                    main_usagemsg();
+                    return 1;
+                }
+            }
+        }
+    }
 
     timer_begin();
     network_initialize(&network);
@@ -238,6 +322,8 @@ int main(int argc, char** argv)
 
         list_shuffle(&digits, &digits);
     }
+
+    network_free(&network);
 
     timer_end();
     printf("network ran in %fms:\n", timer_elapsedms);

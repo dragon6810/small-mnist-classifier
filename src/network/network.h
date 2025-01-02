@@ -74,5 +74,6 @@ void network_genedges(network_network_t* network);
 void network_run(network_network_t* network);
 void network_backprop(network_network_t* network, vector_t want, unsigned long int batchsize);
 void network_learn(network_network_t* network);
+void network_free(network_network_t* network);
 
 #endif

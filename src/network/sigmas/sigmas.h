@@ -30,4 +30,7 @@ float sigmas_softmaxslope(network_layer_t* layer, float x);
 float sigmas_sigmoid(network_layer_t* layer, float x);
 float sigmas_sigmoidslope(network_layer_t* layer, float x);
 
+float sigmas_none(network_layer_t* layer, float x);
+float sigmas_noneslope(network_layer_t* layer, float x);
+
 #endif

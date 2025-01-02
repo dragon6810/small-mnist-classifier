@@ -36,5 +36,6 @@ void list_pop(list_t* list, void* element);
 void list_fromspan(list_t* new, list_t* list, unsigned long int start, unsigned long int end);
 void list_copy(list_t* new, list_t* old);
 void list_shuffle(list_t* out, list_t* list);
+void list_free(list_t* list);
 
 #endif
