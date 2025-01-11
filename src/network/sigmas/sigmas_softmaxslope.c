@@ -1,6 +1,6 @@
 #include <network/sigmas/sigmas.h>
 
-#include <assert.h>
+#include <assert/assert.h>
 
 float sigmas_softmaxslope(network_layer_t* layer, float x)
 {

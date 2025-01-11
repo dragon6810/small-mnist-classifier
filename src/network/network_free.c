@@ -1,6 +1,6 @@
 #include <network/network.h>
 
-#include <assert.h>
+#include <assert/assert.h>
 
 static void network_free_freenode(network_node_t* node)
 {

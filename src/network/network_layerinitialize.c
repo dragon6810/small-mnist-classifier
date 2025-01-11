@@ -1,6 +1,6 @@
 #include <network/network.h>
 
-#include <assert.h>
+#include <assert/assert.h>
 #include <string.h>
 
 void network_layerinitialize(network_layer_t* layer, int nnodes, float (*sigma)(network_layer_t*, float), float (*sigmaslope)(network_layer_t*, float))

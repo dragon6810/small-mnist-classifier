@@ -1,6 +1,6 @@
 #include <list/list.h>
 
-#include <assert.h>
+#include <assert/assert.h>
 #include <string.h>
 #include <stdlib.h>
 

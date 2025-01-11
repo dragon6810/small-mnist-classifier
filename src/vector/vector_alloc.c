@@ -1,6 +1,6 @@
 #include <vector/vector.h>
 
-#include <assert.h>
+#include <assert/assert.h>
 #include <stdlib.h>
 
 void vector_alloc(vector_t* vec, unsigned long int len)

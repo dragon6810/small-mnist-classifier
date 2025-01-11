@@ -1,6 +1,6 @@
 #include <network/network.h>
 
-#include <assert.h>
+#include <assert/assert.h>
 #include <string.h>
 
 void network_initialize(network_network_t* network)

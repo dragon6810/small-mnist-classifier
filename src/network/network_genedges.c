@@ -1,6 +1,6 @@
 #include <network/network.h>
 
-#include <assert.h>
+#include <assert/assert.h>
 #include <math.h>
 
 #include <random/random.h>
