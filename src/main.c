@@ -2,6 +2,7 @@
 #include <assert/assert.h>
 #include <stdbool.h>
 #include <string.h>
+#include <math.h>
 
 #include <network/network.h>
 #include <timer/timer.h>
@@ -39,6 +40,8 @@ typedef struct main_mnistdigit_s
 
 static void main_runtests(void)
 {
+    const int learniters = 100;
+
     int i;
 
     timer_begin();
@@ -97,8 +100,39 @@ static void main_runtests(void)
     printf("weight 0, 1: %f.\n", interedgesdata[0]->wantnudge);
     printf("weight 1, 1: %f.\n", interedgesdata[1]->wantnudge);
 
+    interedgesdata = (network_edge_t**) outputdata[0].edges[0].data;
+    assert(interedgesdata[0]->wantnudge == 2.0);
+    assert(interedgesdata[1]->wantnudge == 2.0);
+    interedgesdata[0]->wantnudge = interedgesdata[1]->wantnudge = 0;
+    interedgesdata = (network_edge_t**) outputdata[1].edges[0].data;
+    assert(interedgesdata[0]->wantnudge == 4.0);
+    assert(interedgesdata[1]->wantnudge == 4.0);
+    interedgesdata[0]->wantnudge = interedgesdata[1]->wantnudge = 0;
+    assert(outputdata[0].wantnudge == 2.0);
+    assert(outputdata[1].wantnudge == 4.0);
+    outputdata[0].wantnudge = outputdata[1].wantnudge = 0;
+
+    for(i=0; i<learniters; i++)
+    {
+        network_run(&network);
+        network_backprop(&network, wantvec, 1);
+        network_learn(&network);
+    }
+
+    network_run(&network);
+    printf("after learning:\n");
+    printf("%f.\n%f.\n", outputdata[0].val, outputdata[1].val);
+
     vector_free(&wantvec);
     network_free(&network);
+
+    assert(fabsf(sigmas_sigmoid(&layersdata[1], -2.0) - 0.1192) < 0.01);
+    assert(fabsf(sigmas_sigmoid(&layersdata[1],  0.0) - 0.5000) < 0.01);
+    assert(fabsf(sigmas_sigmoid(&layersdata[1],  2.0) - 0.8808) < 0.01);
+
+    assert(fabsf(sigmas_sigmoidslope(&layersdata[1], -2.0) - 0.1050) < 0.01);
+    assert(fabsf(sigmas_sigmoidslope(&layersdata[1],  0.0) - 0.2500) < 0.01);
+    assert(fabsf(sigmas_sigmoidslope(&layersdata[1],  2.0) - 0.1050) < 0.01);
 
     timer_end();
     printf("all tests passed in %fms.\n", timer_elapsedms);

@@ -35,7 +35,7 @@ void network_backprop_node(network_layer_t* layer, network_node_t* node)
     // calculate z
     z = node->bias;
     edgesdata = (network_edge_t**) node->edges[0].data;
-    for(i=0; i<node->edges->size; i++)
+    for(i=0; i<node->edges[0].size; i++)
         z += edgesdata[i]->nodes[0]->val * edgesdata[i]->weight;
     
     // calculate bias slope
@@ -43,17 +43,18 @@ void network_backprop_node(network_layer_t* layer, network_node_t* node)
 
     // a with respect to z
     wslope = layer->sigmaslope(layer, z) * node->inboundslope;
+    //printf("wslope: %f * %f = %f.\n", layer->sigmaslope(layer, z), node->inboundslope, wslope);
 
     // do weights slopes
-    for(i=0; i<node->edges->size; i++)
+    for(i=0; i<node->edges[0].size; i++)
     {   
         edgesdata[i]->nodes[0]->inboundslope += wslope * edgesdata[i]->weight;
 
         // z with respect to w
-        edgesdata[i]->wantnudge += -(edgesdata[i]->nodes[0]->val * wslope) * divforavg;
+        edgesdata[i]->wantnudge += edgesdata[i]->nodes[0]->val * wslope * divforavg;
     }
 
-    node->wantnudge += -bslope * divforavg;
+    node->wantnudge += bslope * divforavg;
 }
 
 void network_backprop_layer(network_layer_t* layer)
@@ -92,7 +93,7 @@ void network_backprop(network_network_t* network, vector_t want, unsigned long i
     nodesdata = (network_node_t*) curlayer->nodes.data;
     for(i=0; i<want.len; i++)
     {
-        // cost with respect to a
+        // a with respect to cost
         nodesdata[i].inboundslope = 2.0 * (nodesdata[i].val - want.data[i]);
     }
 
