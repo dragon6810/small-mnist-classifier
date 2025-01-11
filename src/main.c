@@ -48,7 +48,9 @@ static void main_runtests(void)
     network_layer_t layer;
     network_layer_t *layersdata;
     network_edge_t *edgesdata;
+    network_edge_t **interedgesdata;
     network_node_t *inputdata, *outputdata;
+    vector_t wantvec;
 
     /*
      * 2 - 2
@@ -74,11 +76,28 @@ static void main_runtests(void)
 
     inputdata = (network_node_t*) layersdata[0].nodes.data;
     inputdata[0].val = 1;
-    inputdata[1].val = 0;
+    inputdata[1].val = 1;
     network_run(&network);
-    assert(outputdata[0].val == 1.0);
-    assert(outputdata[1].val == 1.0);
+    assert(outputdata[0].val == 2.0);
+    assert(outputdata[1].val == 2.0);
 
+    vector_alloc(&wantvec, 2);
+
+    wantvec.data[0] = 1;
+    wantvec.data[1] = 0;
+    network_backprop(&network, wantvec, 1);
+
+    printf("negative gradients:\n");
+    interedgesdata = (network_edge_t**) outputdata[0].edges[0].data;
+    printf("bias 0: %f.\n", outputdata[0].wantnudge);
+    printf("weight 0, 0: %f.\n", interedgesdata[0]->wantnudge);
+    printf("weight 1, 0: %f.\n", interedgesdata[1]->wantnudge);
+    interedgesdata = (network_edge_t**) outputdata[1].edges[0].data;
+    printf("bias 1: %f.\n", outputdata[1].wantnudge);
+    printf("weight 0, 1: %f.\n", interedgesdata[0]->wantnudge);
+    printf("weight 1, 1: %f.\n", interedgesdata[1]->wantnudge);
+
+    vector_free(&wantvec);
     network_free(&network);
 
     timer_end();

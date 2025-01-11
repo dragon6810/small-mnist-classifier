@@ -9,7 +9,12 @@ static void network_free_freenode(network_node_t* node)
     assert(node);
 
     for(i=0; i<2; i++)
+    {
+        if(!node->edges[i].data)
+            continue;
+        
         list_free(&node->edges[i]);
+    }
 }
 
 static void network_free_freelayer(network_layer_t* layer)
