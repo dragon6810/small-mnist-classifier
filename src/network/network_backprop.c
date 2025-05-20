@@ -1,6 +1,6 @@
 #include <network/network.h>
 
-#include <assert/assert.h>
+#include <std/assert/assert.h>
 #include <math.h>
 
 float divforavg;
@@ -24,7 +24,7 @@ void network_backprop_cleanup(network_network_t* network)
 
 void network_backprop_node(network_layer_t* layer, network_node_t* node)
 {
-    int i, j;
+    int i;
 
     network_edge_t **edgesdata;
     float wslope, bslope, z;

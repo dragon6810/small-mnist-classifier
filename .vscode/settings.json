@@ -4,6 +4,7 @@
         "vector.h": "c",
         "list.h": "c",
         "network.h": "c",
-        "assert.h": "c"
+        "assert.h": "c",
+        "random.h": "c"
     }
 }

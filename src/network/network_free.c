@@ -1,6 +1,6 @@
 #include <network/network.h>
 
-#include <assert/assert.h>
+#include <std/assert/assert.h>
 
 static void network_free_freenode(network_node_t* node)
 {
@@ -13,7 +13,7 @@ static void network_free_freenode(network_node_t* node)
         if(!node->edges[i].data)
             continue;
         
-        list_free(&node->edges[i]);
+        LIST_FREE(node->edges[i]);
     }
 }
 
@@ -29,7 +29,7 @@ static void network_free_freelayer(network_layer_t* layer)
     for(i=0; i<layer->nodes.size; i++)
         network_free_freenode(&nodesdata[i]);
 
-    list_free(&layer->nodes);
+    LIST_FREE(layer->nodes);
 }
 
 void network_free(network_network_t* network)
@@ -40,10 +40,10 @@ void network_free(network_network_t* network)
 
     assert(network);
 
-    list_free(&network->edges);
+    LIST_FREE(network->edges);
 
     layersdata = (network_layer_t*) network->layers.data;
     for(i=0; i<network->layers.size; i++)
         network_free_freelayer(&layersdata[i]);
-    list_free(&network->layers);
+    LIST_FREE(network->layers);
 }

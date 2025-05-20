@@ -1,7 +1,8 @@
 #include <vector/vector.h>
 
-#include <assert/assert.h>
 #include <stdlib.h>
+
+#include <std/assert/assert.h>
 
 void vector_free(vector_t* vec)
 {

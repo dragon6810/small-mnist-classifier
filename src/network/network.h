@@ -1,7 +1,7 @@
 #ifndef _network_h
 #define _network_h
 
-#include <list/list.h>
+#include <std/list/list.h>
 #include <vector/vector.h>
 
 /*
@@ -15,10 +15,15 @@ typedef struct network_edge_s network_edge_t;
 typedef struct network_layer_s network_layer_t;
 typedef struct network_network_s network_network_t;
 
+LIST_TYPE(network_node_t, list_network_node)
+LIST_TYPE(network_edge_t, list_network_edge)
+LIST_TYPE(network_edge_t*, list_network_edge_p)
+LIST_TYPE(network_layer_t, list_network_layer)
+
 struct network_node_s
 {
     float val;
-    list_t edges[2]; // list of network_edge_t*; 0 is incoming, 1 is outgoing
+    list_network_edge_p_t edges[2]; // 0 is incoming, 1 is outgoing
     float bias;      // bias
 
     // backprop stuff
@@ -37,15 +42,15 @@ struct network_edge_s
 
 struct network_layer_s
 {
-    list_t nodes; // list of network_node_t
+    list_network_node_t nodes;
     float (*sigma)(network_layer_t*, float);
     float (*sigmaslope)(network_layer_t*, float);
 };
 
 struct network_network_s
 {
-    list_t layers; // list of network_layer_t
-    list_t edges;  // list of network_edge_t
+    list_network_layer_t layers;
+    list_network_edge_t edges;
 };
 
 /*

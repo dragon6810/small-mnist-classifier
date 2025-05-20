@@ -1,6 +1,6 @@
 #include <network/sigmas/sigmas.h>
 
-#include <assert/assert.h>
+#include <std/assert/assert.h>
 #include <math.h>
 
 float sigmas_softmax(network_layer_t* layer, float x)

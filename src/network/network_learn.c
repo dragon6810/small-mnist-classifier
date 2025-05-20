@@ -1,7 +1,7 @@
 #include <network/network.h>
 
 #include <stdio.h>
-#include <assert/assert.h>
+#include <std/assert/assert.h>
 
 const float learnrate = -0.01;
 

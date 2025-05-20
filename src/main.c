@@ -1,12 +1,12 @@
 #include <stdio.h>
-#include <assert/assert.h>
+#include <std/assert/assert.h>
 #include <stdbool.h>
 #include <string.h>
 #include <math.h>
 
 #include <network/network.h>
-#include <timer/timer.h>
-#include <random/random.h>
+#include <std/timer/timer.h>
+#include <std/random/random.h>
 #include <network/sigmas/sigmas.h>
 
 #define MAIN_MNISTINPUTLEN  784
@@ -29,18 +29,20 @@
 
 #define BIG_TO_HOST32(x) (HOST_IS_BIG_ENDIAN ? (x) : SWAP32(x))
 
-network_network_t network;
-list_t digits;
-
 typedef struct main_mnistdigit_s
 {
     float values[MAIN_MNISTINPUTLEN];
     int label;
 } main_mnistdigit_t;
 
+LIST_TYPE(main_mnistdigit_t, list_main_mnistdigit)
+
+network_network_t network;
+list_main_mnistdigit_t digits;
+
 static void main_runtests(void)
 {
-    const int learniters = 100;
+    const int learniters = 100000;
 
     int i;
 
@@ -122,54 +124,60 @@ static void main_runtests(void)
     network_run(&network);
     printf("after learning:\n");
     printf("%f.\n%f.\n", outputdata[0].val, outputdata[1].val);
+    assert(fabs(outputdata[0].val - 1.0) < 0.1);
+    assert(fabs(outputdata[1].val - 0.0) < 0.1);
+
+    network_free(&network);
+    network_initialize(&network);
+
+    /*
+     * 2 - 2
+    */
+    network_layerinitialize(&layer, 2, NULL, NULL);
+    network_addlayer(&network, &layer);
+
+    network_layerinitialize(&layer, 4, sigmas_sigmoid, sigmas_sigmoidslope);
+    network_addlayer(&network, &layer);
+
+    network_layerinitialize(&layer, 4, sigmas_sigmoid, sigmas_sigmoidslope);
+    network_addlayer(&network, &layer);
+
+    network_layerinitialize(&layer, 2, sigmas_sigmoid, sigmas_sigmoidslope);
+    network_addlayer(&network, &layer);
+
+    network_genedges(&network);
+
+    layersdata = (network_layer_t*) network.layers.data;
+    outputdata = (network_node_t*) layersdata[2].nodes.data;
+    inputdata = (network_node_t*) layersdata[0].nodes.data;
+    inputdata[0].val = 1;
+    inputdata[1].val = 1;
+    for(i=0; i<learniters; i++)
+    {
+        network_run(&network);
+        network_backprop(&network, wantvec, 1);
+        network_learn(&network);
+    }
+
+    network_run(&network);
+    printf("after learning:\n");
+    printf("%f.\n%f.\n", outputdata[0].val, outputdata[1].val);
+    assert(fabs(outputdata[0].val - 1.0) < 0.1);
+    assert(fabs(outputdata[1].val - 0.0) < 0.1);
 
     vector_free(&wantvec);
     network_free(&network);
 
-    assert(fabsf(sigmas_sigmoid(&layersdata[1], -2.0) - 0.1192) < 0.01);
-    assert(fabsf(sigmas_sigmoid(&layersdata[1],  0.0) - 0.5000) < 0.01);
-    assert(fabsf(sigmas_sigmoid(&layersdata[1],  2.0) - 0.8808) < 0.01);
+    assert(fabs(sigmas_sigmoid(&layersdata[1], -2.0) - 0.1192) < 0.01);
+    assert(fabs(sigmas_sigmoid(&layersdata[1],  0.0) - 0.5000) < 0.01);
+    assert(fabs(sigmas_sigmoid(&layersdata[1],  2.0) - 0.8808) < 0.01);
 
-    assert(fabsf(sigmas_sigmoidslope(&layersdata[1], -2.0) - 0.1050) < 0.01);
-    assert(fabsf(sigmas_sigmoidslope(&layersdata[1],  0.0) - 0.2500) < 0.01);
-    assert(fabsf(sigmas_sigmoidslope(&layersdata[1],  2.0) - 0.1050) < 0.01);
+    assert(fabs(sigmas_sigmoidslope(&layersdata[1], -2.0) - 0.1050) < 0.01);
+    assert(fabs(sigmas_sigmoidslope(&layersdata[1],  0.0) - 0.2500) < 0.01);
+    assert(fabs(sigmas_sigmoidslope(&layersdata[1],  2.0) - 0.1050) < 0.01);
 
     timer_end();
     printf("all tests passed in %fms.\n", timer_elapsedms);
-}
-
-static unsigned char main_mnistexpect(int index)
-{
-    int i;
-
-    FILE* ptr;
-    unsigned char datatype, ndimensions;
-    unsigned int dimsize;
-    unsigned char curval;
-    network_layer_t *input;
-
-    ptr = fopen("mnist/train-labels-idx1-ubyte", "rb");
-    assert(ptr);
-
-    fseek(ptr, 2, SEEK_SET);
-    fread(&datatype, 1, 1, ptr);
-    fread(&ndimensions, 1, 1, ptr);
-
-    assert(datatype == 0x08);
-    assert(ndimensions == 1);
-
-    fread(&dimsize, sizeof(int), 1, ptr);
-    dimsize = BIG_TO_HOST32(dimsize);
-
-    assert(dimsize == MAIN_MNISTNDIGITS);
-    assert(index < dimsize);
-
-    fseek(ptr, index, SEEK_CUR);
-    fread(&curval, 1, 1, ptr);
-
-    fclose(ptr);
-
-    return curval;
 }
 
 static void main_loadmnistlabels()
@@ -293,12 +301,9 @@ int main(int argc, char** argv)
 {
     int e, i, j, k;
 
-    int wanted;
     vector_t vwanted;
-    main_mnistdigit_t *digitsdata;
     network_layer_t *input;
     network_layer_t *output;
-    bool test;
 
     random_seed();
 
@@ -335,15 +340,14 @@ int main(int argc, char** argv)
     printf("network initialized in %fms.\n", timer_elapsedms);
 
     timer_begin();
-    list_initialize(&digits, sizeof(main_mnistdigit_t));
-    list_resize(&digits, MAIN_MNISTNDIGITS);
+    LIST_INITIALIZE(digits);
+    LIST_RESIZE(digits, MAIN_MNISTNDIGITS);
     main_loadmnist();
     main_loadmnistlabels();
     timer_end();
     printf("mnist training set loaded in %fms.\n", timer_elapsedms);
 
     timer_begin();
-    digitsdata = (main_mnistdigit_t*) digits.data;
     input = (network_layer_t*) network.layers.data;
     for(e=0; e<MAIN_NEPOCHS; e++)
     {
@@ -354,26 +358,26 @@ int main(int argc, char** argv)
             for(j=i*MAIN_BATCHSIZE; j<(i+1)*MAIN_BATCHSIZE; j++)
             {
                 vector_alloc(&vwanted, MAIN_MNISTOUTPUTLEN);
-                vwanted.data[digitsdata[j].label] = 1.0;
+                vwanted.data[digits.data[j].label] = 1.0;
 
                 for(k=0; k<MAIN_MNISTINPUTLEN; k++)
-                    ((network_node_t*)input->nodes.data)[k].val = digitsdata[j].values[k];
+                    input->nodes.data[k].val = digits.data[j].values[k];
 
                 network_run(&network);
                 network_backprop(&network, vwanted, MAIN_BATCHSIZE);
 
                 vector_free(&vwanted);
 
-                output = &((network_layer_t*)network.layers.data)[network.layers.size-1];
-                printf("    expected %hhu:\n", digitsdata[j].label);
+                output = &network.layers.data[network.layers.size-1];
+                printf("    expected %hhu:\n", digits.data[j].label);
                 for(k=0; k<MAIN_MNISTOUTPUTLEN; k++)
-                    printf("        %d: %f.\n", k, ((network_node_t*)output->nodes.data)[k].val);
+                    printf("        %d: %f.\n", k, output->nodes.data[k].val);
             }
 
             network_learn(&network);
         }
 
-        list_shuffle(&digits, &digits);
+        LIST_SHUFFLE(digits, digits);
     }
 
     network_free(&network);
